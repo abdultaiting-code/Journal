@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Journal App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: black;
+            background-color: white;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            margin: 5px 0;
+        }
+
+        input, textarea, button, select {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: black;
+            background-color: white;
+            border: 1px solid black;
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #e0e0e0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .folder {
+            border: 1px solid black;
+            margin: 10px 0;
+            padding: 10px;
+        }
+
+        .folder-header {
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .folder-content {
+            margin-top: 10px;
+            padding-left: 15px;
+            border-left: 2px solid black;
+        }
+
+        .entry-item {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed black;
+        }
+
+        .top-info {
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        /* Tabs styling */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid black;
+            flex-wrap: wrap; 
+        }
+
+        .tab-btn {
+            flex: 1 1 12.5%; 
+            padding: 10px 2px;
+            text-align: center;
+            background-color: #f0f0f0;
+            border: 1px solid black;
+            border-bottom: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .tab-btn.active {
+            background-color: white;
+            border-bottom: 2px solid white;
+            margin-bottom: -2px;
+        }
+
+        /* --- THEMES CSS --- */
+        body[data-theme="dark"] { filter: invert(100%) hue-rotate(180deg); background-color: #000; min-height: 100vh; }
+        body[data-theme="sepia"] { filter: sepia(80%); background-color: #fff; min-height: 100vh; }
+        body[data-theme="grayscale"] { filter: grayscale(100%); background-color: #fff; min-height: 100vh; }
+        
+        body[data-theme="blue"] { background-color: #e3f2fd; min-height: 100vh; }
+        body[data-theme="blue"] .tab-btn.active { background-color: #e3f2fd; border-bottom-color: #e3f2fd; }
+        
+        body[data-theme="green"] { background-color: #e8f5e9; min-height: 100vh; }
+        body[data-theme="green"] .tab-btn.active { background-color: #e8f5e9; border-bottom-color: #e8f5e9; }
+        
+        body[data-theme="pink"] { background-color: #fce4ec; min-height: 100vh; }
+        body[data-theme="pink"] .tab-btn.active { background-color: #fce4ec; border-bottom-color: #fce4ec; }
+        
+        body[data-theme="purple"] { background-color: #f3e5f5; min-height: 100vh; }
+        body[data-theme="purple"] .tab-btn.active { background-color: #f3e5f5; border-bottom-color: #f3e5f5; }
+        
+        body[data-theme="yellow"] { background-color: #fffde7; min-height: 100vh; }
+        body[data-theme="yellow"] .tab-btn.active { background-color: #fffde7; border-bottom-color: #fffde7; }
+        
+        body[data-theme="mint"] { background-color: #e0f2f1; min-height: 100vh; }
+        body[data-theme="mint"] .tab-btn.active { background-color: #e0f2f1; border-bottom-color: #e0f2f1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <h2>Enter Password</h2>
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password">
+            <button type="submit">Log-In</button>
+        </form>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app-screen" class="hidden">
+        
+        <!-- HEADER INFO -->
+        <div class="top-info" id="top-datetime"></div>
+
+        <h1>Journal</h1>
+        <hr style="border: 1px solid black; margin-bottom: 15px;">
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button type="button" class="tab-btn active" id="btn-tab-add" onclick="switchTab('add')">Add</button>
+            <button type="button" class="tab-btn" id="btn-tab-list" onclick="switchTab('list')">Journals</button>
+            <button type="button" class="tab-btn" id="btn-tab-bills" onclick="switchTab('bills')">Bills</button>
+            <button type="button" class="tab-btn" id="btn-tab-expenses" onclick="switchTab('expenses')">Expenses</button>
+            <button type="button" class="tab-btn" id="btn-tab-reminders" onclick="switchTab('reminders')">Reminders</button>
+            <button type="button" class="tab-btn" id="btn-tab-appointments" onclick="switchTab('appointments')">Appts</button>
+            <button type="button" class="tab-btn" id="btn-tab-vault" onclick="switchTab('vault')">Accounts</button>
+            <button type="button" class="tab-btn" id="btn-tab-settings" onclick="switchTab('settings')">Settings</button>
+        </div>
+
+        <!-- TAB 1: ADD JOURNAL SECTION -->
+        <div id="tab-content-add">
+            <div style="margin: 20px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
+                    <h3>Add Journal</h3>
+                    <!-- Upload Photo Option -->
+                    <div>
+                        <button type="button" onclick="document.getElementById('gallery-input').click()" style="width: auto; padding: 6px 12px; margin: 0; background: #e0e0e0; font-size: 14px;" title="Upload Photo">
+                            🖼️ Upload Photo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden file input -->
+                <input type="file" id="gallery-input" accept="image/*" class="hidden" onchange="handlePhotoSelected(event)">
+
+                <!-- Photo Preview Area -->
+                <div id="photo-preview-container" class="hidden" style="margin-top: 10px; position: relative; border: 1px dashed black; padding: 5px; text-align: center; background: #fafafa;">
+                    <img id="photo-preview" src="" alt="Preview" style="max-width: 100%; max-height: 200px; display: block; margin: 0 auto;">
+                    <button type="button" onclick="removeAttachedPhoto()" style="margin-top: 5px; background: #ffcdd2; width: auto; padding: 4px 10px; font-size: 12px;">Remove Photo</button>
+                </div>
+
+                <textarea id="journal-text" placeholder="Write your journal here..." rows="4" style="margin-top: 10px;"></textarea>
+                
+                <div style="margin-top: 10px;">
+                    <label>Custom Date & Time (Optional):</label>
+                    <input type="datetime-local" id="custom-datetime" oninput="toggleSaveCurrentTime()" onblur="toggleSaveCurrentTime()">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" id="btn-save-current" onclick="saveJournal(true)">Save Current Time</button>
+                    <button type="button" onclick="saveJournal(false)">Save Custom Time</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: JOURNAL LIST SECTION -->
+        <div id="tab-content-list" class="hidden">
+            <h3>Journal Entries</h3>
+            
+            <div style="margin: 15px 0; padding: 10px; border: 1px solid black; background: #fafafa;">
+                <label for="goto-date" style="font-weight: bold; display: block; margin-bottom: 5px;">Go to Date:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="date" id="goto-date">
+                    <button type="button" onclick="goToDate()" style="width: auto; padding: 8px 15px;">Jump</button>
+                </div>
+            </div>
+
+            <div id="journal-list"></div>
+        </div>
+
+        <!-- TAB 3: BILLS SECTION -->
+        <div id="tab-content-bills" class="hidden">
+            <div style="margin: 20px 0;">
+                <h3>Manage Bills</h3>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="flex: 1; padding: 10px; border: 1px solid black; background: #fff3f3; text-align: center;">
+                        <div style="font-size: 12px; font-weight: bold;">TOTAL UNPAID</div>
+                        <div id="unpaid-total" style="font-size: 18px; font-weight: bold; color: #d32f2f;">₱0.00</div>
+                    </div>
+                    <div style="flex: 1; padding: 10px; border: 1px solid black; background: #f3fff3; text-align: center;">
+                        <div style="font-size: 12px; font-weight: bold;">TOTAL PAID</div>
+                        <div id="paid-total" style="font-size: 18px; font-weight: bold; color: #388e3c;">₱0.00</div>
+                    </div>
+                </div>
+
+                <div style="padding: 15px; border: 1px dashed black; margin-bottom: 20px; background: #fafafa;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px;">Add New Bill</h4>
+                    <input type="text" id="bill-name" placeholder="Bill Name (e.g., Meralco, Internet)">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="bill-amount" placeholder="Amount (₱)" step="0.01">
+                        <input type="date" id="bill-due-date" title="Due Date">
+                    </div>
+                    <button type="button" onclick="addBill()" style="margin-top: 10px; background-color: #dcedc8;">Add Bill</button>
+                </div>
+
+                <h4 style="margin-bottom: 10px;">My Bills</h4>
+                <div id="bills-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: EXPENSES SECTION -->
+        <div id="tab-content-expenses" class="hidden">
+            <div style="margin: 20px 0;">
+                <h3>Daily Expenses</h3>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="flex: 1; padding: 10px; border: 1px solid black; background: #fffde7; text-align: center;">
+                        <div style="font-size: 12px; font-weight: bold;">SPENT TODAY</div>
+                        <div id="exp-today-total" style="font-size: 18px; font-weight: bold; color: #d32f2f;">₱0.00</div>
+                    </div>
+                    <div style="flex: 1; padding: 10px; border: 1px solid black; background: #e3f2fd; text-align: center;">
+                        <div style="font-size: 12px; font-weight: bold;">THIS MONTH</div>
+                        <div id="exp-month-total" style="font-size: 18px; font-weight: bold; color: #1976d2;">₱0.00</div>
+                    </div>
+                </div>
+
+                <div style="padding: 15px; border: 1px dashed black; margin-bottom: 20px; background: #fafafa;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px;">New Expense</h4>
+                    <input type="text" id="exp-name" placeholder="What did you buy? (e.g. Lunch, Gas)">
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <input type="number" id="exp-amount" placeholder="Amount (₱)" step="0.01" style="flex: 1;">
+                        <select id="exp-category" style="flex: 1; padding: 8px; border: 1px solid black; background: white; font-family: Arial;">
+                            <option value="Food">🍔 Food</option>
+                            <option value="Transport">🚌 Transport</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Utilities">💡 Utilities</option>
+                            <option value="Others">✨ Others</option>
+                        </select>
+                    </div>
+                    <input type="date" id="exp-date" style="margin-top: 5px;">
+                    <button type="button" onclick="addExpense()" style="margin-top: 10px; background-color: #ffcc80;">Add Expense</button>
+                </div>
+
+                <h4 style="margin-bottom: 10px;">Recent Expenses</h4>
+                <div id="expenses-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: REMINDERS SECTION -->
+        <div id="tab-content-reminders" class="hidden">
+            <div style="margin: 20px 0;">
+                <h3>Reminders</h3>
+                <div style="padding: 15px; border: 1px dashed black; margin-bottom: 20px; background: #fafafa;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px;">Add Reminder</h4>
+                    <input type="text" id="reminder-text" placeholder="What to remember?">
+                    <input type="date" id="reminder-date">
+                    <button type="button" onclick="addReminder()" style="margin-top: 10px; background-color: #dcedc8;">Add Reminder</button>
+                </div>
+                <h4 style="margin-bottom: 10px;">Reminder List</h4>
+                <div id="reminders-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 6: APPOINTMENTS SECTION -->
+        <div id="tab-content-appointments" class="hidden">
+            <div style="margin: 20px 0;">
+                <h3>Appointments</h3>
+                <div style="padding: 15px; border: 1px dashed black; margin-bottom: 20px; background: #fafafa;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px;">Schedule Appointment</h4>
+                    <input type="text" id="appt-title" placeholder="Appointment Title / Person">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="date" id="appt-date" style="flex: 1;">
+                        <input type="time" id="appt-time" style="flex: 1;">
+                    </div>
+                    <button type="button" onclick="addAppointment()" style="margin-top: 10px; background-color: #bbdefb;">Save Appointment</button>
+                </div>
+                <h4 style="margin-bottom: 10px;">Upcoming Appointments</h4>
+                <div id="appointments-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 7: ACCOUNTS (VAULT) SECTION -->
+        <div id="tab-content-vault" class="hidden">
+            <!-- Vault Unlock Screen -->
+            <div id="vault-auth-screen" style="margin: 20px 0; padding: 20px; border: 1px dashed black; background: #fafafa; text-align: center;">
+                <h3>Unlock Accounts Manager</h3>
+                <p style="font-size: 13px; color: #555;">Enter Vault Password to view saved credentials.</p>
+                <input type="password" id="vault-auth-pass" placeholder="Vault Password">
+                <button type="button" onclick="unlockVault()" style="background-color: #bbdefb; margin-top: 10px;">Unlock</button>
+            </div>
+
+            <!-- Vault Main UI -->
+            <div id="vault-main-ui" class="hidden" style="margin: 20px 0;">
+                
+                <!-- 1ST BLOCK: BANKS -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="border-bottom: 2px solid black; padding-bottom: 5px;">Banks</h3>
+                    <div style="padding: 15px; border: 1px dashed black; margin-bottom: 10px; background: #fafafa;">
+                        <input type="text" id="vault-bank" placeholder="Bank">
+                        <input type="text" id="vault-bank-accname" placeholder="Account Name">
+                        <input type="text" id="vault-accnum" placeholder="Account Number">
+                        <button type="button" onclick="addBankEntry()" style="margin-top: 10px; background-color: #bbdefb;">Save Bank</button>
+                    </div>
+                    <div id="vault-bank-list"></div>
+                </div>
+
+                <!-- 2ND BLOCK: CARDS -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="border-bottom: 2px solid black; padding-bottom: 5px;">Cards</h3>
+                    <div style="padding: 15px; border: 1px dashed black; margin-bottom: 10px; background: #fafafa;">
+                        <input type="text" id="vault-card-bank" placeholder="Bank">
+                        <input type="text" id="vault-card-name" placeholder="Name on Card">
+                        <input type="text" id="vault-card-number" placeholder="Card Number">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="vault-card-expiry" placeholder="Expiry (MM/YY)" style="flex: 1;">
+                            <input type="text" id="vault-card-cvc" placeholder="CVC" style="flex: 1;">
+                        </div>
+                        <button type="button" onclick="addCardEntry()" style="margin-top: 10px; background-color: #fff9c4;">Save Card</button>
+                    </div>
+                    <div id="vault-card-list"></div>
+                </div>
+
+                <!-- 3RD BLOCK: PASSWORDS -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="border-bottom: 2px solid black; padding-bottom: 5px;">Passwords</h3>
+                    <div style="padding: 15px; border: 1px dashed black; margin-bottom: 10px; background: #fafafa;">
+                        <input type="text" id="vault-pass-account" placeholder="Account">
+                        <input type="text" id="vault-pass-accname" placeholder="User">
+                        <input type="password" id="vault-password" placeholder="Password">
+                        <button type="button" onclick="addPasswordEntry()" style="margin-top: 10px; background-color: #c8e6c9;">Save Password</button>
+                    </div>
+                    <div id="vault-password-list"></div>
+                </div>
+
+                <button type="button" onclick="lockVault()" style="margin-top: 20px; background-color: #ffcdd2; width: 100%;">Lock Vault Now</button>
+            </div>
+        </div>
+
+        <!-- TAB 8: SETTINGS -->
+        <div id="tab-content-settings" class="hidden">
+            <div style="margin: 20px 0;">
+                
+                <div style="padding: 15px; border: 1px solid black; background: #fafafa; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; margin-bottom: 5px;">App Theme & Colors</h4>
+                    <p style="font-size: 12px; margin-top: 0; margin-bottom: 10px;">Choose your preferred visual style.</p>
+                    <select id="theme-selector" onchange="changeTheme()" style="width: 100%; padding: 8px; border: 1px solid black; font-family: Arial, sans-serif; font-size: 14px; background-color: white; color: black;">
+                        <option value="default">1. Default (Light)</option>
+                        <option value="dark">2. Dark Mode</option>
+                        <option value="sepia">3. Sepia</option>
+                        <option value="grayscale">4. Grayscale</option>
+                        <option value="blue">5. Ocean Blue</option>
+                        <option value="green">6. Forest Green</option>
+                        <option value="pink">7. Sakura Pink</option>
+                        <option value="purple">8. Midnight Purple</option>
+                        <option value="yellow">9. Sunny Yellow</option>
+                        <option value="mint">10. Mint Green</option>
+                    </select>
+                </div>
+
+                <div style="padding: 15px; border: 1px solid black; background: #fafafa; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; margin-bottom: 5px;">Security / Passwords</h4>
+                    <p style="font-size: 12px; margin-top: 0; margin-bottom: 15px;">Change your app access and modification passwords.</p>
+                    
+                    <div style="margin-bottom: 15px; border-bottom: 1px dashed #bbb; padding-bottom: 15px;">
+                        <div style="font-weight: bold; font-size: 13px;">Login Password</div>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="password" id="curr-login-pass" placeholder="Current Pass">
+                            <input type="password" id="new-login-pass" placeholder="New Pass">
+                        </div>
+                        <button type="button" onclick="changeLoginPassword()" style="background-color: #e3f2fd; margin-top: 5px;">Update Login Password</button>
+                    </div>
+
+                    <div style="margin-bottom: 15px; border-bottom: 1px dashed #bbb; padding-bottom: 15px;">
+                        <div style="font-weight: bold; font-size: 13px;">Edit / Delete Password</div>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="password" id="curr-edit-pass" placeholder="Current Pass">
+                            <input type="password" id="new-edit-pass" placeholder="New Pass">
+                        </div>
+                        <button type="button" onclick="changeEditPassword()" style="background-color: #fce4ec; margin-top: 5px;">Update Edit Password</button>
+                    </div>
+
+                    <div>
+                        <div style="font-weight: bold; font-size: 13px;">Vault Password</div>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="password" id="curr-vault-pass" placeholder="Current Pass">
+                            <input type="password" id="new-vault-pass" placeholder="New Pass">
+                        </div>
+                        <button type="button" onclick="changeVaultPassword()" style="background-color: #e8f5e9; margin-top: 5px;">Update Vault Password</button>
+                    </div>
+                </div>
+
+                <h3>Data Backup & Restore</h3>
+                <p style="font-size: 13px; color: #555;">Save your data as a .json file to avoid losing them if the app is uninstalled.</p>
+                
+                <div style="padding: 15px; border: 1px solid black; background: #fafafa; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0;">Backup Data</h4>
+                    <p style="font-size: 12px; margin-top: 0;">Download a copy of all your data (Requires Vault Password).</p>
+                    <input type="password" id="backup-vault-pass" placeholder="Vault Password" style="margin-bottom: 8px;">
+                    <button type="button" onclick="backupData()" style="background-color: #bbdefb;">Download .json Backup</button>
+                </div>
+
+                <div style="padding: 15px; border: 1px solid black; background: #fafafa;">
+                    <h4 style="margin-top: 0;">Restore Data</h4>
+                    <p style="font-size: 12px; margin-top: 0;">Upload a previous .json backup file to restore your entries.</p>
+                    <input type="file" id="file-upload" accept=".json" style="margin-bottom: 10px;">
+                    <button type="button" onclick="restoreData()" style="background-color: #ffcc80;">Upload & Restore</button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // --- PASSWORDS INITIALIZATION ---
+    let CORRECT_LOGIN_PASS = localStorage.getItem('simple_login_pass') || "kkkk";
+    let CORRECT_EDIT_PASS = localStorage.getItem('simple_edit_pass') || "llll";
+    let CORRECT_VAULT_PASS = localStorage.getItem('simple_vault_pass') || "jjjj";
+    
+    let isVaultUnlocked = false;
+    let attachedPhotoData = null;
+
+    // --- THEME INITIALIZATION ---
+    let currentTheme = localStorage.getItem('simple_theme') || 'default';
+    document.body.setAttribute('data-theme', currentTheme);
+    document.getElementById('theme-selector').value = currentTheme;
+
+    function changeTheme() {
+        const sel = document.getElementById('theme-selector');
+        document.body.setAttribute('data-theme', sel.value);
+        localStorage.setItem('simple_theme', sel.value);
+    }
+
+    let journals = [];
+    try { journals = JSON.parse(localStorage.getItem('simple_journals')) || []; } 
+    catch (e) { journals = []; }
+
+    let bills = [];
+    try { bills = JSON.parse(localStorage.getItem('simple_bills')) || []; } 
+    catch (e) { bills = []; }
+
+    let expenses = [];
+    try { expenses = JSON.parse(localStorage.getItem('simple_expenses')) || []; } 
+    catch (e) { expenses = []; }
+
+    let reminders = [];
+    try { reminders = JSON.parse(localStorage.getItem('simple_reminders')) || []; } 
+    catch (e) { reminders = []; }
+
+    let appointments = [];
+    try { appointments = JSON.parse(localStorage.getItem('simple_appointments')) || []; } 
+    catch (e) { appointments = []; }
+
+    let vault = [];
+    try { vault = JSON.parse(localStorage.getItem('simple_vault')) || []; } 
+    catch (e) { vault = []; }
+
+    const todayISO = new Date().toISOString().split('T')[0];
+    document.getElementById('exp-date').value = todayISO;
+    document.getElementById('reminder-date').value = todayISO;
+    document.getElementById('appt-date').value = todayISO;
+
+    function updateTopDateTime() {
+        const now = new Date();
+        const dateStr = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getFullYear()} (${now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()})`;
+        
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const timeStr = `${hours}:${minutes} ${ampm}`;
+
+        document.getElementById('top-datetime').innerText = `${dateStr} - ${timeStr}`;
+    }
+
+    setInterval(updateTopDateTime, 1000);
+    updateTopDateTime();
+
+    function handleLogin(e) {
+        e.preventDefault();
+        const pass = document.getElementById('login-pass').value;
+        if (pass === CORRECT_LOGIN_PASS) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            renderJournals();
+            renderBills();
+            renderExpenses();
+            renderReminders();
+            renderAppointments();
+        } else {
+            alert("Incorrect password.");
+            document.getElementById('login-pass').value = '';
+        }
+    }
+
+    function switchTab(tabName) {
+        const btnAdd = document.getElementById('btn-tab-add');
+        const btnList = document.getElementById('btn-tab-list');
+        const btnBills = document.getElementById('btn-tab-bills');
+        const btnExpenses = document.getElementById('btn-tab-expenses');
+        const btnReminders = document.getElementById('btn-tab-reminders');
+        const btnAppointments = document.getElementById('btn-tab-appointments');
+        const btnVault = document.getElementById('btn-tab-vault');
+        const btnSettings = document.getElementById('btn-tab-settings');
+        
+        const contentAdd = document.getElementById('tab-content-add');
+        const contentList = document.getElementById('tab-content-list');
+        const contentBills = document.getElementById('tab-content-bills');
+        const contentExpenses = document.getElementById('tab-content-expenses');
+        const contentReminders = document.getElementById('tab-content-reminders');
+        const contentAppointments = document.getElementById('tab-content-appointments');
+        const contentVault = document.getElementById('tab-content-vault');
+        const contentSettings = document.getElementById('tab-content-settings');
+
+        btnAdd.classList.remove('active');
+        btnList.classList.remove('active');
+        btnBills.classList.remove('active');
+        btnExpenses.classList.remove('active');
+        btnReminders.classList.remove('active');
+        btnAppointments.classList.remove('active');
+        btnVault.classList.remove('active');
+        btnSettings.classList.remove('active');
+        
+        contentAdd.classList.add('hidden');
+        contentList.classList.add('hidden');
+        contentBills.classList.add('hidden');
+        contentExpenses.classList.add('hidden');
+        contentReminders.classList.add('hidden');
+        contentAppointments.classList.add('hidden');
+        contentVault.classList.add('hidden');
+        contentSettings.classList.add('hidden');
+
+        if (tabName === 'add') {
+            btnAdd.classList.add('active');
+            contentAdd.classList.remove('hidden');
+        } else if (tabName === 'list') {
+            btnList.classList.add('active');
+            contentList.classList.remove('hidden');
+        } else if (tabName === 'bills') {
+            btnBills.classList.add('active');
+            contentBills.classList.remove('hidden');
+        } else if (tabName === 'expenses') {
+            btnExpenses.classList.add('active');
+            contentExpenses.classList.remove('hidden');
+        } else if (tabName === 'reminders') {
+            btnReminders.classList.add('active');
+            contentReminders.classList.remove('hidden');
+        } else if (tabName === 'appointments') {
+            btnAppointments.classList.add('active');
+            contentAppointments.classList.remove('hidden');
+        } else if (tabName === 'vault') {
+            btnVault.classList.add('active');
+            contentVault.classList.remove('hidden');
+            if (isVaultUnlocked) {
+                renderVault();
+            }
+        } else if (tabName === 'settings') {
+            btnSettings.classList.add('active');
+            contentSettings.classList.remove('hidden');
+        }
+    }
+
+    function changeLoginPassword() {
+        const current = document.getElementById('curr-login-pass').value;
+        const newPass = document.getElementById('new-login-pass').value;
+
+        if (current === CORRECT_LOGIN_PASS) {
+            if (newPass.trim() === "") { alert("New password cannot be empty."); return; }
+            CORRECT_LOGIN_PASS = newPass;
+            localStorage.setItem('simple_login_pass', CORRECT_LOGIN_PASS);
+            alert("Login password successfully updated!");
+            document.getElementById('curr-login-pass').value = '';
+            document.getElementById('new-login-pass').value = '';
+        } else {
+            alert("Incorrect current login password.");
+        }
+    }
+
+    function changeEditPassword() {
+        const current = document.getElementById('curr-edit-pass').value;
+        const newPass = document.getElementById('new-edit-pass').value;
+
+        if (current === CORRECT_EDIT_PASS) {
+            if (newPass.trim() === "") { alert("New password cannot be empty."); return; }
+            CORRECT_EDIT_PASS = newPass;
+            localStorage.setItem('simple_edit_pass', CORRECT_EDIT_PASS);
+            alert("Edit/Delete password successfully updated!");
+            document.getElementById('curr-edit-pass').value = '';
+            document.getElementById('new-edit-pass').value = '';
+        } else {
+            alert("Incorrect current edit/delete password.");
+        }
+    }
+
+    function changeVaultPassword() {
+        const current = document.getElementById('curr-vault-pass').value;
+        const newPass = document.getElementById('new-vault-pass').value;
+
+        if (current === CORRECT_VAULT_PASS) {
+            if (newPass.trim() === "") { alert("New password cannot be empty."); return; }
+            CORRECT_VAULT_PASS = newPass;
+            localStorage.setItem('simple_vault_pass', CORRECT_VAULT_PASS);
+            alert("Vault password successfully updated!");
+            document.getElementById('curr-vault-pass').value = '';
+            document.getElementById('new-vault-pass').value = '';
+            lockVault();
+        } else {
+            alert("Incorrect current vault password.");
+        }
+    }
+
+    function toggleSaveCurrentTime() {
+        const customVal = document.getElementById('custom-datetime').value;
+        const btnSaveCurrent = document.getElementById('btn-save-current');
+        btnSaveCurrent.disabled = !!customVal;
+    }
+
+    function formatAMPM(dateObj) {
+        let hours = dateObj.getHours();
+        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${hours}:${minutes} ${ampm}`;
+    }
+
+    function formatDateKey(dateObj) {
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const yyyy = dateObj.getFullYear();
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+        return `${mm}-${dd}-${yyyy} (${dayName})`;
+    }
+
+    function formatMonthKey(dateObj) {
+        const monthName = dateObj.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+        const yyyy = dateObj.getFullYear();
+        return `${monthName} ${yyyy}`;
+    }
+
+    function handlePhotoSelected(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            attachedPhotoData = e.target.result;
+            document.getElementById('photo-preview').src = attachedPhotoData;
+            document.getElementById('photo-preview-container').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        event.target.value = ''; // Reset input
+    }
+
+    function removeAttachedPhoto() {
+        attachedPhotoData = null;
+        document.getElementById('photo-preview').src = '';
+        document.getElementById('photo-preview-container').classList.add('hidden');
+    }
+
+    function saveJournal(isCurrentTime) {
+        const text = document.getElementById('journal-text').value.trim();
+        if (!text && !attachedPhotoData) { alert("Journal cannot be empty (write text or attach a photo)."); return; }
+
+        let entryDate;
+        let isCustom = false;
+        if (isCurrentTime) {
+            entryDate = new Date();
+        } else {
+            const customVal = document.getElementById('custom-datetime').value;
+            if (!customVal) { alert("Please select a custom date and time."); return; }
+            entryDate = new Date(customVal);
+            isCustom = true;
+        }
+
+        const now = new Date();
+        const addedTimeFormatted = `${formatDateKey(now)} at ${formatAMPM(now)}`;
+
+        const newEntry = {
+            id: Date.now().toString(),
+            text: text,
+            photo: attachedPhotoData,
+            timestamp: entryDate.getTime(),
+            addedString: isCustom ? addedTimeFormatted : null
+        };
+
+        journals.push(newEntry);
+        localStorage.setItem('simple_journals', JSON.stringify(journals));
+
+        document.getElementById('journal-text').value = '';
+        document.getElementById('custom-datetime').value = '';
+        document.getElementById('btn-save-current').disabled = false;
+        removeAttachedPhoto();
+
+        renderJournals();
+        alert("Journal saved successfully!");
+        switchTab('list');
+    }
+
+    function renderJournals(targetDateKey = null) {
+        const listContainer = document.getElementById('journal-list');
+        if (!listContainer) return;
+        
+        listContainer.innerHTML = '';
+
+        if (!Array.isArray(journals) || journals.length === 0) {
+            listContainer.innerHTML = '<p>No journals yet.</p>';
+            return;
+        }
+
+        // Group by Month first, then by Date
+        const monthGrouped = {};
+        journals.forEach(j => {
+            const dateObj = new Date(j.timestamp);
+            const monthKey = formatMonthKey(dateObj);
+            const dateKey = formatDateKey(dateObj);
+
+            if (!monthGrouped[monthKey]) monthGrouped[monthKey] = {};
+            if (!monthGrouped[monthKey][dateKey]) monthGrouped[monthKey][dateKey] = [];
+            monthGrouped[monthKey][dateKey].push(j);
+        });
+
+        // Sort month keys descending by timestamp of their latest entry
+        const sortedMonthKeys = Object.keys(monthGrouped).sort((a, b) => {
+            const latestA = Math.max(...Object.values(monthGrouped[a]).flat().map(e => e.timestamp));
+            const latestB = Math.max(...Object.values(monthGrouped[b]).flat().map(e => e.timestamp));
+            return latestB - latestA;
+        });
+
+        sortedMonthKeys.forEach(monthKey => {
+            const datesInMonth = monthGrouped[monthKey];
+            const totalEntriesInMonth = Object.values(datesInMonth).flat().length;
+
+            const monthFolderDiv = document.createElement('div');
+            monthFolderDiv.className = 'folder';
+            monthFolderDiv.style.backgroundColor = '#fdfdfd';
+
+            const monthHeaderDiv = document.createElement('div');
+            monthHeaderDiv.className = 'folder-header';
+            
+            const isTargetMonth = targetDateKey && Object.keys(datesInMonth).some(d => d.startsWith(targetDateKey));
+            monthHeaderDiv.innerHTML = `<span>📁 ${monthKey} [${totalEntriesInMonth}]</span> <span>${isTargetMonth ? '▲' : '▼'}</span>`;
+
+            const monthContentDiv = document.createElement('div');
+            monthContentDiv.className = `folder-content ${isTargetMonth ? '' : 'hidden'}`;
+
+            monthHeaderDiv.onclick = () => {
+                if (monthContentDiv.classList.contains('hidden')) {
+                    monthContentDiv.classList.remove('hidden');
+                    monthHeaderDiv.lastElementChild.innerText = '▲';
+                } else {
+                    monthContentDiv.classList.add('hidden');
+                    monthHeaderDiv.lastElementChild.innerText = '▼';
+                }
+            };
+
+            const sortedDateKeys = Object.keys(datesInMonth).sort((a, b) => datesInMonth[b][0].timestamp - datesInMonth[a][0].timestamp);
+
+            sortedDateKeys.forEach(dateKey => {
+                const dayEntries = datesInMonth[dateKey];
+                const dayFolderDiv = document.createElement('div');
+                dayFolderDiv.className = 'folder';
+                dayFolderDiv.id = `folder-${dateKey}`;
+
+                const dayHeaderDiv = document.createElement('div');
+                dayHeaderDiv.className = 'folder-header';
+                
+                const isTargetDay = targetDateKey && dateKey.startsWith(targetDateKey);
+                dayHeaderDiv.innerHTML = `<span>📁 ${dateKey} [${dayEntries.length}]</span> <span>${isTargetDay ? '▲' : '▼'}</span>`;
+
+                const dayContentDiv = document.createElement('div');
+                dayContentDiv.className = `folder-content ${isTargetDay ? '' : 'hidden'}`;
+
+                dayHeaderDiv.onclick = (e) => {
+                    e.stopPropagation();
+                    if (dayContentDiv.classList.contains('hidden')) {
+                        dayContentDiv.classList.remove('hidden');
+                        dayHeaderDiv.lastElementChild.innerText = '▲';
+                    } else {
+                        dayContentDiv.classList.add('hidden');
+                        dayHeaderDiv.lastElementChild.innerText = '▼';
+                    }
+                };
+
+                dayEntries.sort((a, b) => b.timestamp - a.timestamp);
+                dayEntries.forEach(entry => {
+                    const entryDateObj = new Date(entry.timestamp);
+                    const timeStr = formatAMPM(entryDateObj);
+
+                    let markerHtml = '';
+                    if (entry.addedString) {
+                        markerHtml = `<span style="font-size: 12px; font-weight: normal; color: #555; margin-left: 8px;">(added: on ${entry.addedString})</span>`;
+                    }
+
+                    let photoHtml = '';
+                    if (entry.photo) {
+                        photoHtml = `<div style="margin-bottom: 8px;"><img src="${entry.photo}" alt="Journal Photo" style="max-width: 100%; max-height: 250px; border: 1px solid #ccc; display: block;"></div>`;
+                    }
+
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'entry-item';
+                    entryDiv.innerHTML = `
+                        <div style="font-weight: bold; margin-bottom: 5px;">⏰ ${timeStr} ${markerHtml}</div>
+                        ${photoHtml}
+                        <div style="white-space: pre-wrap; margin-bottom: 8px;">${escapeHtml(entry.text || '')}</div>
+                        <button onclick="editEntry('${entry.id}')">Edit</button>
+                        <button onclick="deleteEntry('${entry.id}')">Delete</button>
+                    `;
+                    dayContentDiv.appendChild(entryDiv);
+                });
+
+                dayFolderDiv.appendChild(dayHeaderDiv);
+                dayFolderDiv.appendChild(dayContentDiv);
+                monthContentDiv.appendChild(dayFolderDiv);
+            });
+
+            monthFolderDiv.appendChild(monthHeaderDiv);
+            monthFolderDiv.appendChild(monthContentDiv);
+            listContainer.appendChild(monthFolderDiv);
+        });
+    }
+
+    function goToDate() {
+        const val = document.getElementById('goto-date').value;
+        if (!val) { alert("Please select a date to jump to."); return; }
+
+        const parts = val.split('-');
+        if (parts.length === 3) {
+            const targetPrefix = `${parts[1]}-${parts[2]}-${parts[0]}`;
+            renderJournals(targetPrefix);
+
+            const allFolders = document.querySelectorAll('.folder');
+            let found = false;
+            allFolders.forEach(folder => {
+                if (folder.id.includes(targetPrefix)) {
+                    found = true;
+                    folder.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            if (!found) alert("No journal entries found for this date.");
+        }
+    }
+
+    function editEntry(id) {
+        const pass = prompt("Enter password to edit:");
+        if (pass !== CORRECT_EDIT_PASS) {
+            if (pass !== null) alert("Incorrect password.");
+            return;
+        }
+
+        const entry = journals.find(j => j.id === id);
+        if (!entry) return;
+
+        const newText = prompt("Edit journal text:", entry.text);
+        if (newText !== null) {
+            entry.text = newText.trim();
+            localStorage.setItem('simple_journals', JSON.stringify(journals));
+            renderJournals();
+        }
+    }
+
+    function deleteEntry(id) {
+        const pass = prompt("Enter password to delete:");
+        if (pass !== CORRECT_EDIT_PASS) {
+            if (pass !== null) alert("Incorrect password.");
+            return;
+        }
+
+        if (confirm("Are you sure you want to delete this journal?")) {
+            journals = journals.filter(j => j.id !== id);
+            localStorage.setItem('simple_journals', JSON.stringify(journals));
+            renderJournals();
+        }
+    }
+
+    /* --- BILLS FUNCTIONS --- */
+    function addBill() {
+        const name = document.getElementById('bill-name').value.trim();
+        const amount = parseFloat(document.getElementById('bill-amount').value);
+        const dueDate = document.getElementById('bill-due-date').value;
+
+        if (!name || isNaN(amount) || !dueDate) { alert("Please fill in all bill details correctly."); return; }
+
+        const newBill = {
+            id: 'bill_' + Date.now().toString(),
+            name: name,
+            amount: amount,
+            dueDate: dueDate,
+            isPaid: false
+        };
+
+        bills.push(newBill);
+        localStorage.setItem('simple_bills', JSON.stringify(bills));
+
+        document.getElementById('bill-name').value = '';
+        document.getElementById('bill-amount').value = '';
+        document.getElementById('bill-due-date').value = '';
+
+        renderBills();
+    }
+
+    function toggleBill(id) {
+        const bill = bills.find(b => b.id === id);
+        if (bill) {
+            bill.isPaid = !bill.isPaid;
+            localStorage.setItem('simple_bills', JSON.stringify(bills));
+            renderBills();
+        }
+    }
+
+    function deleteBill(id) {
+        const pass = prompt("Enter password to delete bill:");
+        if (pass !== CORRECT_EDIT_PASS) {
+            if (pass !== null) alert("Incorrect password.");
+            return;
+        }
+
+        if (confirm("Are you sure you want to delete this bill?")) {
+            bills = bills.filter(b => b.id !== id);
+            localStorage.setItem('simple_bills', JSON.stringify(bills));
+            renderBills();
+        }
+    }
+
+    function renderBills() {
+        const listContainer = document.getElementById('bills-list');
+        if (!listContainer) return;
+        
+        listContainer.innerHTML = '';
+        let totalUnpaid = 0, totalPaid = 0;
+
+        if (!Array.isArray(bills) || bills.length === 0) {
+            listContainer.innerHTML = '<p style="color:#555; font-size:14px; text-align:center;">No bills added yet.</p>';
+            document.getElementById('unpaid-total').innerText = '₱0.00';
+            document.getElementById('paid-total').innerText = '₱0.00';
+            return;
+        }
+
+        bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        bills.forEach(bill => {
+            if (bill.isPaid) totalPaid += bill.amount;
+            else totalUnpaid += bill.amount;
+
+            const billDiv = document.createElement('div');
+            billDiv.style.border = "1px solid black";
+            billDiv.style.marginBottom = "10px";
+            billDiv.style.padding = "12px";
+            billDiv.style.display = "flex";
+            billDiv.style.justifyContent = "space-between";
+            billDiv.style.alignItems = "center";
+            billDiv.style.backgroundColor = bill.isPaid ? "#f3fff3" : "#fff";
+            billDiv.style.opacity = bill.isPaid ? "0.8" : "1";
+
+            const dateObj = new Date(bill.dueDate);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const infoDiv = document.createElement('div');
+            infoDiv.innerHTML = `
+                <div style="font-weight: bold; font-size: 16px; text-decoration: ${bill.isPaid ? 'line-through' : 'none'};">${escapeHtml(bill.name)}</div>
+                <div style="font-size: 12px; color: ${bill.isPaid ? '#555' : '#d32f2f'}; font-weight: ${bill.isPaid ? 'normal' : 'bold'}; margin-top: 3px;">Due: ${formattedDate}</div>
+                <div style="font-weight: bold; font-size: 18px; margin-top: 8px;">₱${bill.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            `;
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.style.display = "flex";
+            actionsDiv.style.flexDirection = "column";
+            actionsDiv.style.gap = "8px";
+            actionsDiv.style.width = "100px";
+            actionsDiv.innerHTML = `
+                <button onclick="toggleBill('${bill.id}')" style="background-color: ${bill.isPaid ? '#e0e0e0' : '#81c784'}; border-color: black; margin: 0; padding: 6px;">
+                    ${bill.isPaid ? 'Undo Pay' : 'Mark Paid'}
+                </button>
+                <button onclick="deleteBill('${bill.id}')" style="background-color: #ef9a9a; border-color: black; margin: 0; padding: 6px;">Delete</button>
+            `;
+
+            billDiv.appendChild(infoDiv);
+            billDiv.appendChild(actionsDiv);
+            listContainer.appendChild(billDiv);
+        });
+
+        document.getElementById('unpaid-total').innerText = '₱' + totalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('paid-total').innerText = '₱' + totalPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    /* --- EXPENSES FUNCTIONS --- */
+    function addExpense() {
+        const name = document.getElementById('exp-name').value.trim();
+        const amount = parseFloat(document.getElementById('exp-amount').value);
+        const date = document.getElementById('exp-date').value;
+        const category = document.getElementById('exp-category').value;
+
+        if (!name || isNaN(amount) || !date) { alert("Please fill in all expense details."); return; }
+
+        expenses.push({
+            id: 'exp_' + Date.now().toString(),
+            name: name,
+            amount: amount,
+            date: date,
+            category: category,
+            timestamp: Date.now()
+        });
+        localStorage.setItem('simple_expenses', JSON.stringify(expenses));
+
+        document.getElementById('exp-name').value = '';
+        document.getElementById('exp-amount').value = '';
+        document.getElementById('exp-date').value = todayISO;
+        renderExpenses();
+    }
+
+    function deleteExpense(id) {
+        const pass = prompt("Enter password to delete expense:");
+        if (pass !== CORRECT_EDIT_PASS) {
+            if (pass !== null) alert("Incorrect password.");
+            return;
+        }
+        if (confirm("Are you sure you want to delete this expense?")) {
+            expenses = expenses.filter(e => e.id !== id);
+            localStorage.setItem('simple_expenses', JSON.stringify(expenses));
+            renderExpenses();
+        }
+    }
+
+    function renderExpenses() {
+        const listContainer = document.getElementById('expenses-list');
+        if (!listContainer) return;
+        listContainer.innerHTML = '';
+
+        const currentMonthPrefix = todayISO.substring(0, 7);
+        let totalToday = 0, totalMonth = 0;
+
+        const catIcons = { 'Food': '🍔', 'Transport': '🚌', 'Shopping': '🛍️', 'Utilities': '💡', 'Others': '✨' };
+
+        if (!Array.isArray(expenses) || expenses.length === 0) {
+            listContainer.innerHTML = '<p style="color:#555; font-size:14px; text-align:center;">No expenses added yet.</p>';
+        } else {
+            expenses.sort((a, b) => {
+                if (a.date === b.date) return b.timestamp - a.timestamp;
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            let currentDateGroup = null;
+            expenses.forEach(exp => {
+                if (exp.date === todayISO) totalToday += exp.amount;
+                if (exp.date.startsWith(currentMonthPrefix)) totalMonth += exp.amount;
+
+                if (currentDateGroup !== exp.date) {
+                    currentDateGroup = exp.date;
+                    const dateHeader = document.createElement('div');
+                    dateHeader.style.fontWeight = 'bold';
+                    dateHeader.style.marginTop = '15px';
+                    dateHeader.style.marginBottom = '5px';
+                    dateHeader.style.borderBottom = '1px solid black';
+                    
+                    const dObj = new Date(exp.date);
+                    const formattedD = dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                    dateHeader.innerText = exp.date === todayISO ? `Today, ${formattedD}` : formattedD;
+                    listContainer.appendChild(dateHeader);
+                }
+
+                const expDiv = document.createElement('div');
+                expDiv.style.border = "1px solid #ccc";
+                expDiv.style.marginBottom = "5px";
+                expDiv.style.padding = "10px";
+                expDiv.style.display = "flex";
+                expDiv.style.justifyContent = "space-between";
+                expDiv.style.alignItems = "center";
+                expDiv.style.backgroundColor = "#fafafa";
+
+                const icon = catIcons[exp.category] || '🛒';
+                expDiv.innerHTML = `
+                    <div>
+                        <div style="font-weight: bold; font-size: 15px;">${icon} ${escapeHtml(exp.name)}</div>
+                        <div style="font-size: 11px; color: #555; margin-top: 3px; text-transform: uppercase;">${escapeHtml(exp.category)}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="font-weight: bold; font-size: 16px; color: #d32f2f;">₱${exp.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <button onclick="deleteExpense('${exp.id}')" style="background-color: #ef9a9a; border-color: black; margin: 0; padding: 4px 8px; font-size: 12px;">X</button>
+                    </div>
+                `;
+                listContainer.appendChild(expDiv);
+            });
+        }
+        document.getElementById('exp-today-total').innerText = '₱' + totalToday.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('exp-month-total').innerText = '₱' + totalMonth.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    /* --- REMINDERS FUNCTIONS --- */
+    function addReminder() {
+        const text = document.getElementById('reminder-text').value.trim();
+        const date = document.getElementById('reminder-date').value;
+        if (!text || !date) { alert("Please provide reminder text and date."); return; }
+
+        reminders.push({ id: 'rem_' + Date.now().toString(), text: text, date: date, isDone: false });
+        localStorage.setItem('simple_reminders', JSON.stringify(reminders));
+
+        document.getElementById('reminder-text').value = '';
+        document.getElementById('reminder-date').value = todayISO;
+        renderReminders();
+    }
+
+    function toggleReminder(id) {
+        const rem = reminders.find(r => r.id === id);
+        if (rem) {
+            rem.isDone = !rem.isDone;
+            localStorage.setItem('simple_reminders', JSON.stringify(reminders));
+            renderReminders();
+        }
+    }
+
+    function deleteReminder(id) {
+        const pass = prompt("Enter password to delete reminder:");
+        if (pass !== CORRECT_EDIT_PASS) {
+            if (pass !== null) alert("Incorrect password.");
+            return;
+        }
+        if (confirm("Are you sure you want to delete this reminder?")) {
+            reminders = reminders.filter(r => r.id !== id);
+            localStorage.setItem('simple_reminders', JSON.stringify(reminders));
+            renderReminders();
+        }
+    }
+
+    function renderReminders() {
+        const listContainer = document.getElementById('reminders-list');
+        if (!listContainer) return;
+        listContainer.innerHTML = '';
+
+        if (!Array.isArray(reminders) || reminders.length === 0) {
+            listContainer.innerHTML = '<p style="color:#555; font-size:14px; text-align:center;">No reminders added yet.</p>';
+            return;
+        }
+
+        reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
+        reminders.forEach(rem => {
+            const remDiv = document.createElement('div');
+            remDiv.style.border = "1px solid black";
+            remDiv.style.marginBottom = "8px";
+            remDiv.style.padding = "10px";
+            remDiv.style.display = "flex";
+            remDiv.style.justifyContent = "space-between";
+            remDiv.style.alignItems = "center";
+            remDiv.style.backgroundColor = rem.isDone ? "#f3fff3" : "#fff";
+
+            const dObj = new Date(rem.date);
+            const formattedD = dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            remDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <input type="checkbox" ${rem.isDone ? 'checked' : ''} onchange="toggleReminder('${rem.id}')" style="width: 20px; height: 20px; margin: 0; cursor: pointer;">
+                    <div>
+                        <div style="font-weight: bold; font-size: 15px; text-decoration: ${rem.isDone ? 'line-through' : 'none'};">${escapeHtml(rem.text)}</div>
+                        <div style="font-size: 12px; color: #555;">Date: ${formattedD}</div>
+                    </div>
+                </div>
+                <button onclick="deleteReminder('${rem.id}')" style="background-color: #ef9a9a; border-color: black; margin: 0; padding: 4px 8px; font-size: 12px; width: auto;">Delete</button>
+            `;
+            listContainer.appendChild(remDiv);
+        });
+    }
+
+    /* --- APPOINTMENTS FUNCTIONS --- */
+    function addAppointment() {
+        const title = document.getElementById('appt-title').value.trim();
+        const date = document.getElementById('appt-date').value;
+        const time = document.getElementById('appt-time').value;
+        if (!title || !date || !time) { alert("Please fill in appointment title, date, and time."); return; }
+
+        appointments.push({ id: 'appt_' + Date.now().toString(), title: title, date: date, time: time });
+        localStorage.setItem('simple_appointments', JSON.stringify(appointments));
+
+        document.getElementById('appt-title').value = '';
+        document.getElementById('appt-date').value = todayISO;
+        document.getElementById('appt-time').value = '';
+        renderAppointments();
+    }
+
+    function deleteAppointment(id) {
+        const pass = prompt("Enter password to delete appointment:");
+        if (pass !== CORRECT_EDIT_PASS) {
+            if (pass !== null) alert("Incorrect password.");
+            return;
+        }
+        if (confirm("Are you sure you want to delete this appointment?")) {
+            appointments = appointments.filter(a => a.id !== id);
+            localStorage.setItem('simple_appointments', JSON.stringify(appointments));
+            renderAppointments();
+        }
+    }
+
+    function renderAppointments() {
+        const listContainer = document.getElementById('appointments-list');
+        if (!listContainer) return;
+        listContainer.innerHTML = '';
+
+        if (!Array.isArray(appointments) || appointments.length === 0) {
+            listContainer.innerHTML = '<p style="color:#555; font-size:14px; text-align:center;">No appointments scheduled.</p>';
+            return;
+        }
+
+        appointments.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+        appointments.forEach(appt => {
+            const apptDiv = document.createElement('div');
+            apptDiv.style.border = "1px solid black";
+            apptDiv.style.marginBottom = "8px";
+            apptDiv.style.padding = "10px";
+            apptDiv.style.display = "flex";
+            apptDiv.style.justifyContent = "space-between";
+            apptDiv.style.alignItems = "center";
+            apptDiv.style.backgroundColor = "#fff";
+
+            const dObj = new Date(appt.date);
+            const formattedD = dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            let [hh, mm] = appt.time.split(':');
+            let hNum = parseInt(hh, 10);
+            let ampm = hNum >= 12 ? 'PM' : 'AM';
+            hNum = hNum % 12; hNum = hNum ? hNum : 12;
+            const formattedTime = `${hNum}:${mm} ${ampm}`;
+
+            apptDiv.innerHTML = `
+                <div>
+                    <div style="font-weight: bold; font-size: 15px;">📅 ${escapeHtml(appt.title)}</div>
+                    <div style="font-size: 12px; color: #d32f2f; font-weight: bold; margin-top: 3px;">⏰ ${formattedD} at ${formattedTime}</div>
+                </div>
+                <button onclick="deleteAppointment('${appt.id}')" style="background-color: #ef9a9a; border-color: black; margin: 0; padding: 4px 8px; font-size: 12px; width: auto;">Delete</button>
+            `;
+            listContainer.appendChild(apptDiv);
+        });
+    }
+
+    /* --- ACCOUNTS (VAULT) FUNCTIONS --- */
+    function unlockVault() {
+        const pass = document.getElementById('vault-auth-pass').value;
+        if (pass === CORRECT_VAULT_PASS) {
+            isVaultUnlocked = true;
+            document.getElementById('vault-auth-pass').value = '';
+            document.getElementById('vault-auth-screen').classList.add('hidden');
+            document.getElementById('vault-main-ui').classList.remove('hidden');
+            renderVault();
+        } else {
+            alert("Incorrect Vault Password.");
+            document.getElementById('vault-auth-pass').value = '';
+        }
+    }
+
+    function lockVault() {
+        isVaultUnlocked = false;
+        document.getElementById('vault-main-ui').classList.add('hidden');
+        document.getElementById('vault-auth-screen').classList.remove('hidden');
+    }
+
+    function addBankEntry() {
+        const bank = document.getElementById('vault-bank').value.trim();
+        const accName = document.getElementById('vault-bank-accname').value.trim();
+        const accNum = document.getElementById('vault-accnum').value.trim();
+
+        if (!bank || !accName || !accNum) {
+            alert("Please fill in all Bank details.");
+            return;
+        }
+
+        vault.push({
+            id: 'vlt_' + Date.now().toString(),
+            type: 'bank',
+            bankName: bank,
+            accountName: accName,
+            accountNumber: accNum,
+            timestamp: Date.now()
+        });
+        localStorage.setItem('simple_vault', JSON.stringify(vault));
+
+        document.getElementById('vault-bank').value = '';
+        document.getElementById('vault-bank-accname').value = '';
+        document.getElementById('vault-accnum').value = '';
+        
+        renderVault();
+    }
+
+    function addPasswordEntry() {
+        const account = document.getElementById('vault-pass-account').value.trim();
+        const accName = document.getElementById('vault-pass-accname').value.trim();
+        const password = document.getElementById('vault-password').value;
+
+        if (!account || !accName || !password) {
+            alert("Please fill in all Password details.");
+            return;
+        }
+
+        vault.push({
+            id: 'vlt_' + Date.now().toString(),
+            type: 'password',
+            account: account,
+            accountName: accName,
+            password: password,
+            timestamp: Date.now()
+        });
+        localStorage.setItem('simple_vault', JSON.stringify(vault));
+
+        document.getElementById('vault-pass-account').value = '';
+        document.getElementById('vault-pass-accname').value = '';
+        document.getElementById('vault-password').value = '';
+        
+        renderVault();
+    }
+
+    function addCardEntry() {
+        const bank = document.getElementById('vault-card-bank').value.trim();
+        const name = document.getElementById('vault-card-name').value.trim();
+        const number = document.getElementById('vault-card-number').value.trim();
+        const expiry = document.getElementById('vault-card-expiry').value.trim();
+        const cvc = document.getElementById('vault-card-cvc').value.trim();
+
+        if (!bank || !name || !number) {
+            alert("Please fill in at least Bank, Name, and Card Number.");
+            return;
+        }
+
+        vault.push({
+            id: 'vlt_' + Date.now().toString(),
+            type: 'card',
+            bankName: bank,
+            accountName: name,
+            cardNumber: number,
+            expiry: expiry,
+            cvc: cvc,
+            timestamp: Date.now()
+        });
+        localStorage.setItem('simple_vault', JSON.stringify(vault));
+
+        document.getElementById('vault-card-bank').value = '';
+        document.getElementById('vault-card-name').value = '';
+        document.getElementById('vault-card-number').value = '';
+        document.getElementById('vault-card-expiry').value = '';
+        document.getElementById('vault-card-cvc').value = '';
+
+        renderVault();
+    }
+
+    function deleteVaultEntry(id) {
+        if (confirm("Are you sure you want to delete this item?")) {
+            vault = vault.filter(v => v.id !== id);
+            localStorage.setItem('simple_vault', JSON.stringify(vault));
+            renderVault();
+        }
+    }
+
+    function toggleVaultPasswordVis(btnElement) {
+        const passDiv = btnElement.previousElementSibling;
+        if (passDiv.getAttribute('data-visible') === 'false') {
+            passDiv.innerText = passDiv.getAttribute('data-real');
+            passDiv.setAttribute('data-visible', 'true');
+            btnElement.innerText = 'Hide';
+        } else {
+            const isCVC = passDiv.innerText.length === 3;
+            passDiv.innerText = isCVC ? '•••' : '••••••••';
+            passDiv.setAttribute('data-visible', 'false');
+            btnElement.innerText = 'Show';
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copied to clipboard!");
+        }).catch(err => {
+            alert("Failed to copy. Try again.");
+        });
+    }
+
+    function renderVault() {
+        const bankList = document.getElementById('vault-bank-list');
+        const passList = document.getElementById('vault-password-list');
+        const cardList = document.getElementById('vault-card-list');
+        
+        if (!bankList || !passList || !cardList) return;
+        
+        bankList.innerHTML = '';
+        passList.innerHTML = '';
+        cardList.innerHTML = '';
+
+        vault.forEach(v => {
+            if (!v.type) {
+                if (v.bankName || v.accountNumber) v.type = 'bank';
+                else v.type = 'password';
+            }
+        });
+
+        const banks = vault.filter(v => v.type === 'bank');
+        const passwords = vault.filter(v => v.type === 'password');
+        const cards = vault.filter(v => v.type === 'card');
+        
+        if (banks.length === 0) {
+            bankList.innerHTML = '<p style="color:#555; font-size:14px;">No banks saved yet.</p>';
+        } else {
+            banks.forEach(v => {
+                const bName = escapeHtml(v.bankName || '');
+                const aName = escapeHtml(v.accountName || v.username || v.account || '');
+                const aNum = escapeHtml(v.accountNumber || '');
+
+                const div = document.createElement('div');
+                div.style.border = "1px solid black";
+                div.style.marginBottom = "8px";
+                div.style.padding = "10px";
+                div.style.backgroundColor = "#fff";
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="font-weight: bold; font-size: 15px;">🏦 ${bName}</div>
+                        <button onclick="deleteVaultEntry('${v.id}')" style="background-color: #ef9a9a; border-color: black; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Delete</button>
+                    </div>
+                    <div style="font-size: 13px; margin-bottom: 4px;"><span style="color: #666;">Account Name:</span> <strong>${aName}</strong></div>
+                    <div style="font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #666;">Account Number:</span> <strong>${aNum}</strong>
+                        <button onclick="copyToClipboard('${aNum.replace(/'/g, "\\'")}')" style="background-color: #e0e0e0; border: none; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Copy</button>
+                    </div>
+                `;
+                bankList.appendChild(div);
+            });
+        }
+
+        if (passwords.length === 0) {
+            passList.innerHTML = '<p style="color:#555; font-size:14px;">No passwords saved yet.</p>';
+        } else {
+            passwords.forEach(v => {
+                const acc = escapeHtml(v.account || '');
+                const aName = escapeHtml(v.accountName || v.username || '');
+                const pass = escapeHtml(v.password || '');
+
+                const div = document.createElement('div');
+                div.style.border = "1px solid black";
+                div.style.marginBottom = "8px";
+                div.style.padding = "10px";
+                div.style.backgroundColor = "#fff";
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="font-weight: bold; font-size: 15px;">🔒 ${acc}</div>
+                        <button onclick="deleteVaultEntry('${v.id}')" style="background-color: #ef9a9a; border-color: black; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Delete</button>
+                    </div>
+                    <div style="font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #666;">User:</span> <strong>${aName}</strong>
+                        <button onclick="copyToClipboard('${aName.replace(/'/g, "\\'")}')" style="background-color: #e0e0e0; border: none; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Copy</button>
+                    </div>
+                    <div style="font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #666;">Password:</span> 
+                        <span data-real="${pass}" data-visible="false" style="font-family: monospace; font-weight: bold; background: #eee; padding: 2px 5px; border-radius: 3px;">••••••••</span>
+                        <button onclick="toggleVaultPasswordVis(this)" style="background-color: #e0e0e0; border: none; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Show</button>
+                        <button onclick="copyToClipboard('${pass.replace(/'/g, "\\'")}')" style="background-color: #e0e0e0; border: none; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Copy</button>
+                    </div>
+                `;
+                passList.appendChild(div);
+            });
+        }
+
+        if (cards.length === 0) {
+            cardList.innerHTML = '<p style="color:#555; font-size:14px;">No cards saved yet.</p>';
+        } else {
+            cards.forEach(v => {
+                const bName = escapeHtml(v.bankName || '');
+                const cName = escapeHtml(v.accountName || '');
+                const cNum = escapeHtml(v.cardNumber || '');
+                const cExp = escapeHtml(v.expiry || '');
+                const cCvc = escapeHtml(v.cvc || '');
+
+                const div = document.createElement('div');
+                div.style.border = "1px solid black";
+                div.style.marginBottom = "8px";
+                div.style.padding = "10px";
+                div.style.backgroundColor = "#fff";
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="font-weight: bold; font-size: 15px;">💳 ${bName}</div>
+                        <button onclick="deleteVaultEntry('${v.id}')" style="background-color: #ef9a9a; border-color: black; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Delete</button>
+                    </div>
+                    <div style="font-size: 13px; margin-bottom: 4px;"><span style="color: #666;">Name:</span> <strong>${cName}</strong></div>
+                    <div style="font-size: 13px; display: flex; align-items: center; gap: 5px; margin-bottom: 4px;">
+                        <span style="color: #666;">Card Number:</span> <strong>${cNum}</strong>
+                        <button onclick="copyToClipboard('${cNum.replace(/'/g, "\\'")}')" style="background-color: #e0e0e0; border: none; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Copy</button>
+                    </div>
+                    <div style="font-size: 13px; display: flex; align-items: center; gap: 10px;">
+                        <div><span style="color: #666;">Exp:</span> <strong>${cExp}</strong></div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="color: #666;">CVC:</span> 
+                            <span data-real="${cCvc}" data-visible="false" style="font-family: monospace; font-weight: bold; background: #eee; padding: 2px 5px; border-radius: 3px;">•••</span>
+                            <button onclick="toggleVaultPasswordVis(this)" style="background-color: #e0e0e0; border: none; padding: 2px 6px; font-size: 11px; width: auto; margin: 0;">Show</button>
+                        </div>
+                    </div>
+                `;
+                cardList.appendChild(div);
+            });
+        }
+    }
+
+    /* --- BACKUP AND RESTORE FUNCTIONS (.json) --- */
+    function backupData() {
+        const passInput = document.getElementById('backup-vault-pass');
+        const pass = passInput.value;
+
+        if (pass !== CORRECT_VAULT_PASS) {
+            alert("Incorrect Vault Password.");
+            passInput.value = '';
+            return;
+        }
+
+        passInput.value = '';
+
+        const dataToSave = {
+            journals: journals, bills: bills, expenses: expenses, 
+            reminders: reminders, appointments: appointments, vault: vault
+        };
+        
+        const jsonStr = JSON.stringify(dataToSave, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        const dateStr = new Date().toISOString().split('T')[0];
+        a.download = `Journal_Complete_Backup_${dateStr}.json`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function restoreData() {
+        const fileInput = document.getElementById('file-upload');
+        const file = fileInput.files[0];
+        if (!file) { alert("Please select a .json file first."); return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const uploadedData = JSON.parse(e.target.result);
+                if (uploadedData.journals !== undefined && uploadedData.bills !== undefined) {
+                    if (confirm("Warning: This will overwrite your current data with the backup. Do you want to proceed?")) {
+                        journals = uploadedData.journals;
+                        bills = uploadedData.bills;
+                        expenses = uploadedData.expenses || [];
+                        reminders = uploadedData.reminders || [];
+                        appointments = uploadedData.appointments || [];
+                        vault = uploadedData.vault || [];
+                        
+                        localStorage.setItem('simple_journals', JSON.stringify(journals));
+                        localStorage.setItem('simple_bills', JSON.stringify(bills));
+                        localStorage.setItem('simple_expenses', JSON.stringify(expenses));
+                        localStorage.setItem('simple_reminders', JSON.stringify(reminders));
+                        localStorage.setItem('simple_appointments', JSON.stringify(appointments));
+                        localStorage.setItem('simple_vault', JSON.stringify(vault));
+                        
+                        renderJournals(); renderBills(); renderExpenses(); renderReminders(); renderAppointments();
+                        if(isVaultUnlocked) renderVault();
+                        
+                        alert("Data successfully restored!");
+                        fileInput.value = '';
+                    }
+                } else {
+                    alert("Invalid backup file format. Please upload the correct .json file.");
+                }
+            } catch (error) {
+                alert("Error reading file. Ensure it is a valid .json backup.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+</script>
+
+</body>
+</html>
